@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>회원가입</title>
+    </head>
+    <body>
+        <h2>회원가입</h2>
+        <form action="/auth/register_process" method="post">
+        <p><input class="login" type="text" name="username" placeholder="아이디"></p>
+        <p><input class="login" type="password" name="pwd" placeholder="비밀번호"></p>    
+        <p><input class="login" type="password" name="pwd2" placeholder="비밀번호 재확인"></p>
+        <p><input class="btn" type="submit" value="제출"></p>
+        </form>            
+        <p><a href="/auth/login">로그인화면으로 돌아가기</a></p>
+    </body>
+</html>
