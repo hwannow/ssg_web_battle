@@ -5,8 +5,8 @@ var router = express.Router();
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 
-var db = require('../db/database');
-var authCheck = require('../auth/authCheck.js');
+var db = require('../utils/database');
+var authCheck = require('../utils/authCheck.js');
 
 router.post('/new', function(req, res) {
     if (!authCheck.isOwner(req, res)) {

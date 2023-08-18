@@ -3,11 +3,10 @@ const path = require('path');
 var express = require('express');
 var router = express.Router();
 const session = require('express-session');
-const axios = require('axios');
 const FileStore = require('session-file-store')(session);
 
-var db = require('../db/database');
-var authCheck = require('../auth/authCheck.js');
+var db = require('../utils/database');
+var authCheck = require('../utils/authCheck.js');
 
 const multer = require('multer');
 const { request } = require('http');

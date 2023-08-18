@@ -3,7 +3,7 @@ const path = require('path');
 var express = require('express');
 var router = express.Router();
 
-var db = require('../db/database');
+var db = require('../utils/database');
 
 // 로그인 화면
 router.get('/login', function (req, res) {

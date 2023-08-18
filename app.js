@@ -5,18 +5,18 @@ const session = require('express-session')
 const bodyParser = require('body-parser');
 const FileStore = require('session-file-store')(session)
 
-var authRouter = require('./auth/auth');
-var authCheck = require('./auth/authCheck.js');
+var authRouter = require('./src/routes/auth');
+var authCheck = require('./src/utils/authCheck.js');
 
-var articlesRouter = require('./articles/articles');
-var commentsRouter = require('./comments/comments');
+var articlesRouter = require('./src/routes/articles');
+var commentsRouter = require('./src/routes/comments');
 
 const app = express()
-const port = 4040
+const port = 3000
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({
-  secret: 'dnjsgksms@answk_dlqfurgkfkrh^gotj$dlqfurgkqslek.',
+  secret: process.env.SESSION_SECRET_KEY,
   resave: false,
   saveUninitialized: true,
   store:new FileStore(),
@@ -34,12 +34,12 @@ app.get('/', (req, res) => {
   }
 })
 
-// 인증 라우터
+// Routers
 app.use('/auth', authRouter);
 app.use('/articles', articlesRouter);
 app.use('/comments', commentsRouter);
 
-// 메인 페이지
+
 app.get('/main', (req, res) => {
   if (!authCheck.isOwner(req, res)) {
     res.redirect('/auth/login');
