@@ -45,12 +45,12 @@ app.get('/main', (req, res) => {
     res.redirect('/auth/login');
     return false;
   }
-  const filePath = path.join(__dirname, './template/main.html');
+  const filePath = path.join(__dirname, './src/templates/main.html');
   fs.readFile(filePath, 'utf8', function (err, html) {
       res.send(html);
   });
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Node.js app listening on port ${port}`)
 })

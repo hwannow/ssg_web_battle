@@ -67,7 +67,7 @@ router.get('/new', function(req, res) {
         return false;
     }
 
-    const filePath = path.join(__dirname, '../template/articleForm.html');
+    const filePath = path.join(__dirname, '../templates/articleForm.html');
     fs.readFile(filePath, 'utf8', function (err, html) {
         res.send(html);
     });

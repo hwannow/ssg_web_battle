@@ -7,7 +7,7 @@ var db = require('../utils/database');
 
 // 로그인 화면
 router.get('/login', function (req, res) {
-    const filePath = path.join(__dirname, '../template/login.html');
+    const filePath = path.join(__dirname, '../templates/login.html');
     fs.readFile(filePath, 'utf8', function (err, html) {
         res.send(html);
     });
@@ -49,7 +49,7 @@ router.get('/logout', function (req, res) {
 
 // 회원가입 화면
 router.get('/signup', function(req, res) {
-    const filePath = path.join(__dirname, '../template/form.html');
+    const filePath = path.join(__dirname, '../templates/form.html');
     fs.readFile(filePath, 'utf8', function (err, html) {
         res.send(html);
     });
