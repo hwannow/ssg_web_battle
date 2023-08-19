@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 var express = require('express');
 var router = express.Router();
@@ -7,16 +8,24 @@ const FileStore = require('session-file-store')(session);
 
 var db = require('../utils/database');
 var authCheck = require('../utils/authCheck.js');
+require('dotenv').config();
 
 const multer = require('multer');
 const { request } = require('http');
+
+const getCryptoFileName = () => {
+    const currentDate = new Date();
+    const dateString = currentDate.toISOString(); 
+    const md5Hash = crypto.createHash('md5').update(dateString).digest('hex');
+    return md5Hash.toString() + ".jpeg";
+}
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, __dirname + '/../../uploads/')
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, getCryptoFileName())
   }
 });
 
@@ -273,10 +282,7 @@ router.post('/:id/update', upload.single('image'), function(req, res) {
     let imagePath = '';
 
     if(req.file != undefined) {
-        const startIndex = req.file.path.indexOf('uploads') + 8;
-        if (startIndex !== -1) {
-            imagePath += req.file.path.slice(startIndex); 
-        }
+        imagePath += req.file.path.slice(startIndex); 
     }
 
 
