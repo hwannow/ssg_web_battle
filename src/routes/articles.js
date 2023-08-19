@@ -33,6 +33,7 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
   }
 
+//게시판 페이지 GET
 router.get('/', function(req, res) {
     if (!authCheck.isOwner(req, res)) {
         res.redirect('/auth/login');
@@ -88,10 +89,10 @@ router.post('/new', upload.single('image'), function(req, res) {
     if (!authCheck.isOwner(req, res)) {
       return false;
     }
-  
+    
     let title = req.body.title;
     let content = req.body.content;
-    let author = req.body.author;
+    let author = req.session.nickname;
     let imagePath = '';
 
     if(req.file != undefined) {
@@ -127,12 +128,19 @@ router.get('/:id', function(req, res) {
         const author = rows[0].author;
         const createdAt = rows[0].created_at;
         const imagePath = rows[0].image_path;
+        const nowName = req.session.nickname;
+
         let articleHtml = `
         <div>
             <h2>${title}</h2>
+        `;
+
+        if (nowName == author)
+            articleHtml += `
             <form action="/articles/delete/${id}" method="post">
             <p><input class="delete_btn" type="submit" value="글 삭제"></p>
-        `;
+            </form>
+            `;
 
         if(req.session.nickname == author) {
             articleHtml += `
@@ -167,7 +175,6 @@ router.get('/:id', function(req, res) {
           
             html += '<h3>댓글</h3>';
             for (let i = 0; i < commentRows.length; i++) {
-              const commentId = commentRows[i].id;
               const commentContent = commentRows[i].content;
               const commentAuthor = commentRows[i].username;
           
@@ -175,6 +182,7 @@ router.get('/:id', function(req, res) {
                 <div>
                 <p>작성자: ${commentAuthor}</p>
                 <p>${commentContent}</p>
+                <hr>
                 </div>
               `;
               html += commentHtml;
@@ -186,6 +194,10 @@ router.get('/:id', function(req, res) {
 })
 
 router.post('/delete/:id', function(req, res) {
+    if (!authCheck.isOwner(req, res)) {
+        return false;
+      }
+
     const id = req.params.id; 
    
     db.query('DELETE FROM articles where id =' + id, function(error, commentRows) {
@@ -196,6 +208,10 @@ router.post('/delete/:id', function(req, res) {
 });
 
 router.get('/:id/update', function(req, res) {
+    if (!authCheck.isOwner(req, res)) {
+        return false;
+      }
+
     const id = req.params.id; 
 
     db.query('SELECT * FROM articles WHERE id = ' + id, function(error, rows) {
