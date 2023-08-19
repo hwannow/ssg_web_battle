@@ -102,10 +102,24 @@ router.post('/new', upload.single('image'), function(req, res) {
         }
     }
   
-    if (title && content && author) {
-      db.query('INSERT INTO articles (title, content, author, image_path) VALUES (?, ?, ?, ?)', [title, content, author, imagePath], function(error, results, fields) {
-        if (error) throw error;
-      });
+    if (title && content) {
+        if (title.length <= 1 || content.length <= 1) {
+            res.send(`<script type="text/javascript">alert("더 길게 입력해 주세요!"); 
+            document.location.href="/articles/new";</script>`);
+            return;
+        } else if (title.length >= 100 || content.length >= 100) {
+            res.send(`<script type="text/javascript">alert("제목과 내용은 100자까지 입력 가능합니다."); 
+            document.location.href="/articles/new";</script>`);
+            return;
+        } else {
+            db.query('INSERT INTO articles (title, content, author, image_path) VALUES (?, ?, ?, ?)', [title, content, author, imagePath], function(error, results, fields) {
+                console.log("title length: ", title.length);
+                if (error) throw error; 
+            });
+        }
+    } else {
+        res.send(`<script type="text/javascript">alert("입력되지 않은 값이 있습니다."); 
+            document.location.href="/articles/new";</script>`);
     }
   
     res.redirect('/articles');
@@ -128,30 +142,26 @@ router.get('/:id', function(req, res) {
         const author = rows[0].author;
         const createdAt = rows[0].created_at;
         const imagePath = rows[0].image_path;
-        const nowName = req.session.nickname;
 
         let articleHtml = `
         <div>
-            <h2>${title}</h2>
+            <h2>${escapeHtml(title)}</h2>
         `;
 
-        if (nowName == author)
+
+        if(req.session.nickname == author) {
             articleHtml += `
             <form action="/articles/delete/${id}" method="post">
             <p><input class="delete_btn" type="submit" value="글 삭제"></p>
             </form>
-            `;
-
-        if(req.session.nickname == author) {
-            articleHtml += `
             <a href="/articles/${id}/update">글 수정하기</a>
             `
         }
 
         articleHtml += `
-            <p>Author: ${author}</p>
+            <p>Author: ${escapeHtml(author)}</p>
             <p>Created At: ${createdAt}</p>
-            <p>${content}</p>
+            <p>${escapeHtml(content)}</p>
             <img src="/../../uploads/${imagePath}" alt="Uploaded Image">
         </div>
         <hr>
@@ -180,8 +190,8 @@ router.get('/:id', function(req, res) {
           
               const commentHtml = `
                 <div>
-                <p>작성자: ${commentAuthor}</p>
-                <p>${commentContent}</p>
+                <p>작성자: ${escapeHtml(commentAuthor)}</p>
+                <p>${escapeHtml(commentContent)}</p>
                 <hr>
                 </div>
               `;
@@ -269,10 +279,24 @@ router.post('/:id/update', upload.single('image'), function(req, res) {
         }
     }
 
-    if (title && content && author) {
-      db.query('UPDATE articles SET title = ?, content = ?, author = ?, image_path = ? WHERE id = ?', [title, content, author, imagePath, id], function(error, results, fields) {
-        if (error) throw error;
-      });
+
+
+    if (title && content) {
+        if (title.length <= 1 || content.length <= 1) {
+            res.send(`<script type="text/javascript">alert("더 길게 입력해 주세요!"); 
+            document.location.href="/articles/new";</script>`);
+            return;
+        } else if (title.length >= 100 || content.length >= 100) {
+            res.send(`<script type="text/javascript">alert("제목과 내용은 100자까지 입력 가능합니다."); 
+            document.location.href="/articles/new";</script>`);
+            return;
+        }
+        db.query('UPDATE articles SET title = ?, content = ?, author = ?, image_path = ? WHERE id = ?', [title, content, author, imagePath, id], function(error, results, fields) {
+            if (error) throw error;
+          });
+    } else {
+        res.send(`<script type="text/javascript">alert("입력되지 않은 값이 있습니다."); 
+            document.location.href="/articles/new";</script>`);
     }
   
     res.redirect('/articles');

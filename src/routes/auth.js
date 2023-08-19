@@ -62,9 +62,18 @@ router.post('/register_process', function(req, res) {
     var password2 = req.body.pwd2;
 
     if (username && password && password2) {
+        if (username.length <= 8 || password.length <= 8) {
+            res.send(`<script type="text/javascript">alert("아이디와 패스워드는 8자 이상 입력해 주세요!"); 
+            document.location.href="/auth/signup";</script>`);
+            return;
+        } else if (username.length >= 50 || password.length >= 255) {
+            res.send(`<script type="text/javascript">alert("아이디는 50자, 패스워드는 255자까지 입력 가능합니다!"); 
+            document.location.href="/auth/signup";</script>`);
+            return;
+        }
         db.query('SELECT * FROM users WHERE username = ?', [username], function(error, results, fields) { // DB에 같은 이름의 회원아이디가 있는지 확인
         if (error) throw error;
-        if (results.length <= 0 && password == password2) {     // DB에 같은 이름의 회원아이디가 없고, 비밀번호가 올바르게 입력된 경우 
+        if (results.length <= 0 && password === password2) {     // DB에 같은 이름의 회원아이디가 없고, 비밀번호가 올바르게 입력된 경우 
             db.query('INSERT INTO users (username, password) VALUES(?,?)', [username, password], function (error, data) {
                 if (error) throw error;
                 res.send(`<script type="text/javascript">alert("회원가입이 완료되었습니다!");
