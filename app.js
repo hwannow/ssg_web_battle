@@ -1,4 +1,5 @@
 const fs = require('fs');
+const helmet = require('helmet');
 const path = require('path');
 const express = require('express')
 const session = require('express-session')
@@ -22,6 +23,7 @@ app.use(session({
   store:new FileStore(),
 }))
 
+app.use(helmet());
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
 app.get('/', (req, res) => {

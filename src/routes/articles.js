@@ -21,7 +21,17 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-
+function escapeHtml(text) {
+    var map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+  
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+  }
 
 router.get('/', function(req, res) {
     if (!authCheck.isOwner(req, res)) {
@@ -47,10 +57,10 @@ router.get('/', function(req, res) {
 
             const articleHtml = `
                 <div>
-                <a href="articles/${id}"><h2>${title}</h2></a>
-                <p>Author: ${author}</p>
+                <a href="articles/${id}"><h2>${escapeHtml(title)}</h2></a>
+                <p>Author: ${escapeHtml(author)}</p>
                 <p>Created At: ${createdAt}</p>
-                <p>${content}</p>
+                <p>${escapeHtml(content)}</p>
                 </div>
                 <hr>
             `;
