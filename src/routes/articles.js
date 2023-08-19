@@ -13,7 +13,7 @@ const { request } = require('http');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, __dirname + '/../uploads/')
+    cb(null, __dirname + '/../../uploads/')
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname)
@@ -144,7 +144,7 @@ router.get('/:id', function(req, res) {
             <p>Author: ${author}</p>
             <p>Created At: ${createdAt}</p>
             <p>${content}</p>
-            <img src="/../uploads/${imagePath}" alt="Uploaded Image">
+            <img src="/../../uploads/${imagePath}" alt="Uploaded Image">
         </div>
         <hr>
         `;      
