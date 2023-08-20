@@ -39,7 +39,7 @@ function escapeHtml(text) {
 
 //게시판 페이지 GET
 router.get('/', (req, res) => {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
@@ -77,7 +77,7 @@ router.get('/', (req, res) => {
 })
 
 router.get('/new', (req, res) => {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
@@ -90,7 +90,7 @@ router.get('/new', (req, res) => {
 
 // POST 요청 처리
 router.post('/new', upload.single('image'), (req, res) => {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
@@ -129,7 +129,7 @@ router.post('/new', upload.single('image'), (req, res) => {
 });
   
 router.get('/:id', (req, res) => {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
@@ -214,15 +214,11 @@ router.get('/:id', (req, res) => {
 })
 
 router.post('/delete/:id', (req, res) => {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
-    const id = req.params.id;
-    if (filter.filtering(id)) {
-        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
-        return false;
-    }
+    const id = req.params.id; 
 
     db.query('SELECT image_path FROM articles where id = ?', [id] , (error, results, fields) => {
         const filePath = path.join(__dirname, `../../uploads/${results[0].image_path}`);
@@ -230,19 +226,22 @@ router.post('/delete/:id', (req, res) => {
             if (err) console.error(err);
         });
 
-        db.query('DELETE FROM articles where id = ?', [id], (error, commentRows) => {
+        db.query('DELETE FROM articles where id =' + id, (error, commentRows) => {
             if (error) throw error;
         });
+        res.redirect('/articles');
     });
-    
-    res.redirect('/articles');
 });
 
 router.get('/:id/update', (req, res) => {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
-      }
+    }
+    if (!authCheck.isOwner(req, res)) {
+        res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
+        return;
+    }
 
     const id = req.params.id; 
     if (filter.filtering(id)) {
@@ -280,8 +279,12 @@ router.get('/:id/update', (req, res) => {
   
 
 router.post('/:id/update', upload.single('image'), (req, res) => {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
+    }
+    if (!authCheck.isOwner(req, res)) {
+        res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
         return;
     }
   

@@ -27,7 +27,7 @@ app.use(session({
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
 app.get('/', (req, res) => {
-  if (!authCheck.isOwner(req, res)) {
+  if (!authCheck.isLogined(req, res)) {
     res.redirect('/auth/login');
     return false;
   } else {
@@ -43,7 +43,7 @@ app.use('/comments', commentsRouter);
 
 
 app.get('/main', (req, res) => {
-  if (!authCheck.isOwner(req, res)) {
+  if (!authCheck.isLogined(req, res)) {
     res.redirect('/auth/login');
     return false;
   }
