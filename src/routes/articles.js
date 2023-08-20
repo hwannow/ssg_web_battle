@@ -289,11 +289,13 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     let title = req.body.title;
     let content = req.body.content;
     let imagePath = '';
+    let updateImage = '';
 
     if (filter.filtering(id)) {
         res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
         return false;
     }
+
 
     if(req.file != undefined) {
         if (!req.file.originalname.endsWith('.jpeg')) {
@@ -302,9 +304,10 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
         
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
-            imagePath += req.file.path.slice(startIndex); 
+            imagePath = req.file.path.slice(startIndex); 
         }
     }
+
 
     if (title && content) {
         if (title.length <= 1 || content.length <= 1) {
@@ -315,9 +318,13 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
         else if (filter.filtering(title) || filter.filtering(content)) {
             res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles/${id}/update`));
         } else {
-            db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], (error, results, fields) => {
-                if (error) throw error;
-                res.redirect('/articles');
+            db.query('SELECT image_path FROM user_info.articles WHERE id = ?', [id], (error, result, field) => {
+                updateImage = result[0].image_path;
+                if (imagePath == '') imagePath = updateImage;
+                db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], (error, results, fields) => {
+                    if (error) throw error;
+                    res.redirect('/articles');
+                });
             });
         }
     } else {
