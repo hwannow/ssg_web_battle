@@ -210,15 +210,16 @@ router.post('/delete/:id', (req, res) => {
         return;
     }
     const id = req.params.id; 
-    let delete_image = "";
 
     db.query('SELECT image_path FROM articles where id = ?', [id] , (error, results, fields) => {
-       delete_image = results[0].image_path;
-    });
+        const filePath = path.join(__dirname, `../../uploads/${results[0].image_path}`);
+        fs.unlink(filePath, (err) => {
+            if (err) console.error(err);
+        });
 
-    db.query('DELETE FROM articles where id =' + id, (error, commentRows) => {
-        if (error) throw error;
-        if (delete_image.length > 0) console.log("이미지 삭제 코드 추가");
+        db.query('DELETE FROM articles where id =' + id, (error, commentRows) => {
+            if (error) throw error;
+        });
     });
     
     res.redirect('/articles');
@@ -276,7 +277,7 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
         if (!req.file.originalname.endsWith('.jpeg')) {
             res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/:id/update"));
         }
-        console.log(req.file.path);
+        
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
             imagePath += req.file.path.slice(startIndex); 
