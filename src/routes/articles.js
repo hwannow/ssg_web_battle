@@ -137,7 +137,8 @@ router.post('/new', upload.single('image'), function(req, res) {
     } else {
         res.send(`<script type="text/javascript">alert("입력되지 않은 값이 있습니다."); 
             document.location.href="/articles/new";</script>`);
-    }
+            return;
+        }
   
     res.redirect('/articles');
 });
@@ -225,12 +226,17 @@ router.get('/:id', function(req, res) {
 router.post('/delete/:id', function(req, res) {
     if (!authCheck.isOwner(req, res)) {
         return false;
-      }
-
+    }
     const id = req.params.id; 
-   
+    let delete_image = "";
+
+    db.query('SELECT image_path FROM articles where id = ?', [id] , function(error, results, fields) {
+       delete_image = results[0].image_path;
+    });
+
     db.query('DELETE FROM articles where id =' + id, function(error, commentRows) {
         if (error) throw error;
+        if (delete_image.length > 0) console.log("이미지 삭제 코드 추가");
     });
     
     res.redirect('/articles');
@@ -265,10 +271,6 @@ router.get('/:id/update', function(req, res) {
                 <textarea id="content" name="content" rows="5">${content}</textarea>
             </div>
             <div>
-                <label for="author">작성자</label>
-                <input type="text" id="author" name="author" value="${author}">
-            </div>
-            <div>
                 <input type="file" name="image" value="${imagePath}">
             </div>
             <button type="submit">글 작성</button>
@@ -288,7 +290,6 @@ router.post('/:id/update', upload.single('image'), function(req, res) {
     const id = req.params.id; 
     let title = req.body.title;
     let content = req.body.content;
-    let author = req.body.author;
     let imagePath = '';
 
     if(req.file != undefined) {
@@ -307,7 +308,7 @@ router.post('/:id/update', upload.single('image'), function(req, res) {
             document.location.href="/articles/new";</script>`);
             return;
         }
-        db.query('UPDATE articles SET title = ?, content = ?, author = ?, image_path = ? WHERE id = ?', [title, content, author, imagePath, id], function(error, results, fields) {
+        db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], function(error, results, fields) {
             if (error) throw error;
           });
     } else {
