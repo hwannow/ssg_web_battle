@@ -289,10 +289,17 @@ router.post('/:id/update', upload.single('image'), function(req, res) {
     let imagePath = '';
 
     if(req.file != undefined) {
-        imagePath += req.file.path.slice(startIndex); 
+        if (!req.file.originalname.endsWith('.jpeg')) {
+            res.send(`<script type="text/javascript">alert("jpeg 파일만 업로드 가능합니다."); 
+                document.location.href="/articles/new";</script>`);
+            return;
+        }
+        console.log(req.file.path);
+        const startIndex = req.file.path.indexOf('uploads') + 8;
+        if (startIndex !== -1) {
+            imagePath += req.file.path.slice(startIndex); 
+        }
     }
-
-
 
     if (title && content) {
         if (title.length <= 1 || content.length <= 1) {
