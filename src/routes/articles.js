@@ -116,7 +116,7 @@ router.post('/new', upload.single('image'), (req, res) => {
             res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", "/articles/new"));
         } else if (filter.filtering(title) || filter.filtering(content)) {
             res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", "/articles/new"));
-        }else {
+        } else {
             db.query('INSERT INTO articles (title, content, author, image_path) VALUES (?, ?, ?, ?)', [title, content, author, imagePath], function(error, results, fields) {
                 if (error) throw error; 
                 res.redirect('/articles');
@@ -136,6 +136,11 @@ router.get('/:id', (req, res) => {
 
     const articlesId = req.params.id;
 
+    if (filter.filtering(articlesId)) {
+        res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/articles"));
+        return false;
+    }
+
     db.query('SELECT * FROM articles WHERE id = ?', [articlesId], (error, rows) => {
         if (error) throw error;
         
@@ -154,7 +159,7 @@ router.get('/:id', (req, res) => {
                 <h2>${escapeHtml(title)}</h2>
         `;
 
-        if(req.session.nickname == author) {
+        if(req.session.nickname === author) {
             html += `
                 <form action="/articles/delete/${id}" method="post">
                 <p><input class="delete_btn" type="submit" value="글 삭제"></p>
@@ -213,7 +218,11 @@ router.post('/delete/:id', (req, res) => {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
-    const id = req.params.id; 
+    const id = req.params.id;
+    if (filter.filtering(id)) {
+        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
+        return false;
+    }
 
     db.query('SELECT image_path FROM articles where id = ?', [id] , (error, results, fields) => {
         const filePath = path.join(__dirname, `../../uploads/${results[0].image_path}`);
@@ -221,7 +230,7 @@ router.post('/delete/:id', (req, res) => {
             if (err) console.error(err);
         });
 
-        db.query('DELETE FROM articles where id =' + id, (error, commentRows) => {
+        db.query('DELETE FROM articles where id = ?', [id], (error, commentRows) => {
             if (error) throw error;
         });
     });
@@ -236,11 +245,15 @@ router.get('/:id/update', (req, res) => {
       }
 
     const id = req.params.id; 
+    if (filter.filtering(id)) {
+        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
+        return false;
+    }
 
     db.query('SELECT * FROM articles WHERE id = ?', [id], (error, rows) => {
         if(error) throw error;
 
-        const {id, title, content, author, createdAt, imagePath} = rows[0];
+        const {id, title, content, image_path} = rows[0];
         
         let html = `
             <h1>Articles</h1><p><a href="/main">홈으로</a></p><p><a href="/articles/new">글 작성</a></p>
@@ -255,7 +268,7 @@ router.get('/:id/update', (req, res) => {
                 <textarea id="content" name="content" rows="5">${content}</textarea>
             </div>
             <div>
-                <input type="file" name="image" value="${imagePath}">
+                <input type="file" name="image" value="${image_path}">
             </div>
             <button type="submit">글 작성</button>
             </form>
@@ -277,9 +290,14 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     let content = req.body.content;
     let imagePath = '';
 
+    if (filter.filtering(id)) {
+        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
+        return false;
+    }
+
     if(req.file != undefined) {
         if (!req.file.originalname.endsWith('.jpeg')) {
-            res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/:id/update"));
+            res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", `/articles/${id}/update`));
         }
         
         const startIndex = req.file.path.indexOf('uploads') + 8;
@@ -290,16 +308,20 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
 
     if (title && content) {
         if (title.length <= 1 || content.length <= 1) {
-            res.send(exception.alertWindow("더 길게 입력해 주세요!", "/articles/new"));
+            res.send(exception.alertWindow("더 길게 입력해 주세요!", `/articles/${id}/update`));
         } else if (title.length > 100 || content.length > 100) {
-            res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", "/articles/new"));
+            res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", `/articles/${id}/update`));
         }
-        db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], (error, results, fields) => {
-            if (error) throw error;
-            res.redirect('/articles');
-        });
+        else if (filter.filtering(title) || filter.filtering(content)) {
+            res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles/${id}/update`));
+        } else {
+            db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], (error, results, fields) => {
+                if (error) throw error;
+                res.redirect('/articles');
+            });
+        }
     } else {
-        res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", "/articles/new"));
+        res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", `/articles/${id}/update`));
     }
   
 });
