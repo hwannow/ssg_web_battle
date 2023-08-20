@@ -38,8 +38,8 @@ function escapeHtml(text) {
 //게시판 페이지 GET
 router.get('/', (req, res) => {
     if (!authCheck.isOwner(req, res)) {
-        res.redirect('/auth/login');
-        return false;
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
     }
     
     db.query('SELECT * FROM articles', (error, rows) => {
@@ -76,8 +76,8 @@ router.get('/', (req, res) => {
 
 router.get('/new', (req, res) => {
     if (!authCheck.isOwner(req, res)) {
-        res.redirect('/auth/login');
-        return false;
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
     }
 
     const filePath = path.join(__dirname, '../templates/articleForm.html');
@@ -89,47 +89,44 @@ router.get('/new', (req, res) => {
 // POST 요청 처리
 router.post('/new', upload.single('image'), (req, res) => {
     if (!authCheck.isOwner(req, res)) {
-        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/articles/new"));
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
     
-    const {title, content, author} = req.session.nickname;
+    const {title, content, author} = req.body;
     let imagePath = '';
 
     if(req.file !== undefined) {
         if (!req.file.originalname.endsWith('.jpeg')) {
             res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/new"));
-            return;
         }
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
             imagePath += req.file.path.slice(startIndex); 
         }
     }
-  
+
     if (title && content) {
         if (title.length <= 1 || content.length <= 1) {
             res.send(exception.alertWindow("더 길게 입력해 주세요!", "/articles/new"));
-            return;
         } else if (title.length > 100 || content.length > 100) {
             res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", "/articles/new"));
-            return;
         } else {
             db.query('INSERT INTO articles (title, content, author, image_path) VALUES (?, ?, ?, ?)', [title, content, author, imagePath], function(error, results, fields) {
                 if (error) throw error; 
+                res.redirect('/articles');
             });
         }
     } else {
         res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", "/articles/new"));
-            return;
-        }
+    }
   
-    res.redirect('/articles');
 });
   
 router.get('/:id', (req, res) => {
     if (!authCheck.isOwner(req, res)) {
-        return false;
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
     }
 
     const articlesId = req.params.id;
@@ -208,7 +205,8 @@ router.get('/:id', (req, res) => {
 
 router.post('/delete/:id', (req, res) => {
     if (!authCheck.isOwner(req, res)) {
-        return false;
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
     }
     const id = req.params.id; 
     let delete_image = "";
@@ -227,7 +225,8 @@ router.post('/delete/:id', (req, res) => {
 
 router.get('/:id/update', (req, res) => {
     if (!authCheck.isOwner(req, res)) {
-        return false;
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
       }
 
     const id = req.params.id; 
@@ -263,7 +262,8 @@ router.get('/:id/update', (req, res) => {
 
 router.post('/:id/update', upload.single('image'), (req, res) => {
     if (!authCheck.isOwner(req, res)) {
-      return false;
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
     }
   
     const id = req.params.id; 
@@ -274,7 +274,6 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     if(req.file != undefined) {
         if (!req.file.originalname.endsWith('.jpeg')) {
             res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/:id/update"));
-            return;
         }
         console.log(req.file.path);
         const startIndex = req.file.path.indexOf('uploads') + 8;
@@ -286,19 +285,17 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     if (title && content) {
         if (title.length <= 1 || content.length <= 1) {
             res.send(exception.alertWindow("더 길게 입력해 주세요!", "/articles/new"));
-            return;
         } else if (title.length > 100 || content.length > 100) {
             res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", "/articles/new"));
-            return;
         }
         db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], (error, results, fields) => {
             if (error) throw error;
-          });
+            res.redirect('/articles');
+        });
     } else {
         res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", "/articles/new"));
     }
   
-    res.redirect('/articles');
 });
 
 
