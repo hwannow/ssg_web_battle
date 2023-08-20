@@ -320,7 +320,14 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
         } else {
             db.query('SELECT image_path FROM user_info.articles WHERE id = ?', [id], (error, result, field) => {
                 updateImage = result[0].image_path;
-                if (imagePath == '') imagePath = updateImage;
+                if (imagePath == '') {
+                    imagePath = updateImage;
+                } else {
+                    const filePath = path.join(__dirname, `../../uploads/${updateImage}`);
+                    fs.unlink(filePath, (err) => {
+                        if (err) console.error(err);
+                    });
+                }
                 db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], (error, results, fields) => {
                     if (error) throw error;
                     res.redirect('/articles');
