@@ -27,9 +27,6 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     cb(null, getCryptoFileName())
   }
-//   originname: function (req, file, cd) {
-//     cd(null, file.originalname);
-//   }
 });
 
 const upload = multer({ storage: storage });
@@ -108,12 +105,11 @@ router.post('/new', upload.single('image'), function(req, res) {
     let imagePath = '';
 
     if(req.file != undefined) {
-        // if (req.body.file.endsWith('.jpeg')) {
-        //     res.send(`<script type="text/javascript">alert("jpeg 파일만 업로드 가능합니다."); 
-        //         document.location.href="/articles/new";</script>`);
-        //         return;
-        // }
-        //console.log(req.file.path);
+        if (!req.file.originalname.endsWith('.jpeg')) {
+            res.send(`<script type="text/javascript">alert("jpeg 파일만 업로드 가능합니다."); 
+                document.location.href="/articles/new";</script>`);
+            return;
+        }
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
             imagePath += req.file.path.slice(startIndex); 
