@@ -93,7 +93,8 @@ router.post('/new', upload.single('image'), (req, res) => {
         return;
     }
     
-    const {title, content, author} = req.body;
+    const {title, content} = req.body;
+    const author = req.session.nickname;
     let imagePath = '';
 
     if(req.file !== undefined) {

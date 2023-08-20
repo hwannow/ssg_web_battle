@@ -5,6 +5,7 @@ const router = express.Router();
 
 const db = require('../utils/database');
 const exception = require('../utils/exception.js');
+const filter = require('../utils/filter.js');
 
 // 로그인 화면
 router.get('/login', function (req, res) {
@@ -25,7 +26,7 @@ router.post('/login_process', function (req, res) {
 
     db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, pwd], function(error, results, fields) {
         if (error) throw error;
-        if (results.length > 0) {       // db에서의 반환값이 있으면 로그인 성공
+        if (results.length > 0 && results[0].password === pwd) {       // db에서의 반환값이 있으면 로그인 성공
             req.session.is_logined = true;      // 세션 정보 갱신
             req.session.nickname = username;
             req.session.usersId = results[0].id;
@@ -69,6 +70,10 @@ router.post('/register_process', function(req, res) {
         return;
     }
 
+    if (filter.filtering(username) || filter.filtering(pwd)) {
+        res.send(exception.alertWindow("적절하지 않은 문자가 있습니다.", "/auth/signup"));
+        return false;
+    }
     db.query('SELECT * FROM users WHERE username = ?', [username], function(error, results, fields) { // DB에 같은 이름의 회원아이디가 있는지 확인
         if (error) throw error;
         if (results.length <= 0 && pwd === pwd2) {     // DB에 같은 이름의 회원아이디가 없고, 비밀번호가 올바르게 입력된 경우 
