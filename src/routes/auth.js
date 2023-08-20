@@ -62,11 +62,11 @@ router.post('/register_process', function(req, res) {
     var password2 = req.body.pwd2;
 
     if (username && password && password2) {
-        if (username.length <= 8 || password.length <= 8) {
+        if (username.length < 8 || password.length < 8) {
             res.send(`<script type="text/javascript">alert("아이디와 패스워드는 8자 이상 입력해 주세요!"); 
             document.location.href="/auth/signup";</script>`);
             return;
-        } else if (username.length >= 50 || password.length >= 255) {
+        } else if (username.length > 50 || password.length > 255) {
             res.send(`<script type="text/javascript">alert("아이디는 50자, 패스워드는 255자까지 입력 가능합니다!"); 
             document.location.href="/auth/signup";</script>`);
             return;

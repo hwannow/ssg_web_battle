@@ -27,6 +27,9 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     cb(null, getCryptoFileName())
   }
+//   originname: function (req, file, cd) {
+//     cd(null, file.originalname);
+//   }
 });
 
 const upload = multer({ storage: storage });
@@ -105,6 +108,12 @@ router.post('/new', upload.single('image'), function(req, res) {
     let imagePath = '';
 
     if(req.file != undefined) {
+        // if (req.body.file.endsWith('.jpeg')) {
+        //     res.send(`<script type="text/javascript">alert("jpeg 파일만 업로드 가능합니다."); 
+        //         document.location.href="/articles/new";</script>`);
+        //         return;
+        // }
+        //console.log(req.file.path);
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
             imagePath += req.file.path.slice(startIndex); 
@@ -116,13 +125,12 @@ router.post('/new', upload.single('image'), function(req, res) {
             res.send(`<script type="text/javascript">alert("더 길게 입력해 주세요!"); 
             document.location.href="/articles/new";</script>`);
             return;
-        } else if (title.length >= 100 || content.length >= 100) {
+        } else if (title.length > 100 || content.length > 100) {
             res.send(`<script type="text/javascript">alert("제목과 내용은 100자까지 입력 가능합니다."); 
             document.location.href="/articles/new";</script>`);
             return;
         } else {
             db.query('INSERT INTO articles (title, content, author, image_path) VALUES (?, ?, ?, ?)', [title, content, author, imagePath], function(error, results, fields) {
-                console.log("title length: ", title.length);
                 if (error) throw error; 
             });
         }
@@ -170,11 +178,13 @@ router.get('/:id', function(req, res) {
         articleHtml += `
             <p>Author: ${escapeHtml(author)}</p>
             <p>Created At: ${createdAt}</p>
-            <p>${escapeHtml(content)}</p>
-            <img src="/../../uploads/${imagePath}" alt="Uploaded Image">
-        </div>
-        <hr>
+            <p>${escapeHtml(content)}</p>    
+            </div>
         `;      
+
+        if (imagePath.length > 0) articleHtml += `<img src="/../../uploads/${imagePath}" alt="Uploaded Image"></img>`
+        articleHtml += '<hr>';
+
         html += articleHtml;
 
         const commentFormHtml = `
@@ -292,7 +302,7 @@ router.post('/:id/update', upload.single('image'), function(req, res) {
             res.send(`<script type="text/javascript">alert("더 길게 입력해 주세요!"); 
             document.location.href="/articles/new";</script>`);
             return;
-        } else if (title.length >= 100 || content.length >= 100) {
+        } else if (title.length > 100 || content.length > 100) {
             res.send(`<script type="text/javascript">alert("제목과 내용은 100자까지 입력 가능합니다."); 
             document.location.href="/articles/new";</script>`);
             return;
