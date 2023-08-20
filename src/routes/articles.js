@@ -8,6 +8,7 @@ const session = require('express-session');
 const db = require('../utils/database');
 const authCheck = require('../utils/authCheck.js');
 const exception = require('../utils/exception.js');
+const filter = require('../utils/filter.js');
 
 require('dotenv').config();
 
@@ -32,6 +33,7 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
+    if (text == null) return;
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
@@ -112,7 +114,9 @@ router.post('/new', upload.single('image'), (req, res) => {
             res.send(exception.alertWindow("더 길게 입력해 주세요!", "/articles/new"));
         } else if (title.length > 100 || content.length > 100) {
             res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", "/articles/new"));
-        } else {
+        } else if (filter.filtering(title) || filter.filtering(content)) {
+            res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", "/articles/new"));
+        }else {
             db.query('INSERT INTO articles (title, content, author, image_path) VALUES (?, ?, ?, ?)', [title, content, author, imagePath], function(error, results, fields) {
                 if (error) throw error; 
                 res.redirect('/articles');
@@ -132,7 +136,7 @@ router.get('/:id', (req, res) => {
 
     const articlesId = req.params.id;
 
-    db.query('SELECT * FROM articles WHERE id =' + articlesId, (error, rows) => {
+    db.query('SELECT * FROM articles WHERE id = ?', [articlesId], (error, rows) => {
         if (error) throw error;
         
         const id = rows[0].id;
@@ -179,7 +183,7 @@ router.get('/:id', (req, res) => {
             </form>
         `;
 
-        db.query('SELECT comments.id, comments.content, users.username FROM comments INNER JOIN users ON comments.users_id = users.id WHERE comments.articles_id =' + articlesId, function(error, commentRows) {
+        db.query('SELECT comments.id, comments.content, users.username FROM comments INNER JOIN users ON comments.users_id = users.id WHERE comments.articles_id = ?', [articlesId], function(error, commentRows) {
             if (error) throw error;
           
             html += `
@@ -216,7 +220,7 @@ router.post('/delete/:id', (req, res) => {
        delete_image = results[0].image_path;
     });
 
-    db.query('DELETE FROM articles where id =' + id, (error, commentRows) => {
+    db.query('DELETE FROM articles where id = ?', [id], (error, commentRows) => {
         if (error) throw error;
         if (delete_image.length > 0) console.log("이미지 삭제 코드 추가");
     });
@@ -232,7 +236,7 @@ router.get('/:id/update', (req, res) => {
 
     const id = req.params.id; 
 
-    db.query('SELECT * FROM articles WHERE id = ' + id, (error, rows) => {
+    db.query('SELECT * FROM articles WHERE id = ?', [id], (error, rows) => {
         if(error) throw error;
 
         const {id, title, content, author, createdAt, imagePath} = rows[0];

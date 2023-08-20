@@ -4,6 +4,7 @@ const router = express.Router();
 const db = require('../utils/database');
 const authCheck = require('../utils/authCheck.js');
 const exception = require('../utils/exception.js');
+const filter = require('../utils/filter.js');
 
 router.post('/new', function(req, res) {
     if (!authCheck.isOwner(req, res)) {
@@ -14,16 +15,22 @@ router.post('/new', function(req, res) {
     let {content, usersId, articlesId} = req.body;
 
     if(!articlesId || !content || !usersId) {
-        res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", "/articles/${req.body.articlesId}"));
+        res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", `/articles/${articlesId}`));
+        return false;
     } else if (content.length <=1) {
-        res.send(exception.alertWindow("더 길게 입력해 주세요!", "/articles/${req.body.articlesId}"));
+        res.send(exception.alertWindow("더 길게 입력해 주세요!", `/articles/${articlesId}`));
+        return false;
     } else if (content.length >= 255) {
-        res.send(exception.alertWindow("너무 길어요!", "/articles/${req.body.articlesId}"));
+        res.send(exception.alertWindow("너무 길어요!", `/articles/${articlesId}`));
+        return false;
+    } else if (filter.filtering(content)) {
+        res.send(exception.alertWindow("부적절한 단어가 포함되어 있어요!", `/articles/${articlesId}`));
+        return false;
     }
 
     db.query('INSERT INTO comments (content, users_id, articles_id) VALUES (?, ?, ?)', [content, usersId, articlesId], function(error, results, fields) {
         if(error) throw error;
-        res.redirect('/articles/' + req.body.articlesId);
+        res.redirect('/articles/' + articlesId);
     });
   
 })
