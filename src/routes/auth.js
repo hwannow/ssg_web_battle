@@ -41,8 +41,13 @@ router.post('/login_process', function (req, res) {
 
 // 로그아웃
 router.get('/logout', function (req, res) {
+    console.log("요청 들어옴");
     req.session.destroy(function (err) {
-        res.redirect('/');
+        if (err) {
+            console.log(err);
+        } else {
+            res.redirect('/');
+        }
     });
 });
 
