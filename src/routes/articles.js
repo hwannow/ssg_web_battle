@@ -50,9 +50,10 @@ router.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
-    } else if (!IpCheck.isSameIP(req, res)){
+    }
+    if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        return;
     }
     db.query('SELECT * FROM articles', (error, rows) => {
         if (error) throw error;
@@ -90,9 +91,10 @@ router.get('/new', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
-    } else if (!IpCheck.isSameIP(req, res)){
+    }
+    if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        return;
     }
 
     const filePath = path.join(__dirname, '../templates/articleForm.html');
@@ -106,9 +108,10 @@ router.post('/new', upload.single('image'), (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
-    } else if (!IpCheck.isSameIP(req, res)){
+    }
+    if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        return;
     }
     
     const {title, content} = req.body;
@@ -148,16 +151,17 @@ router.get('/:id', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
-    } else if (!IpCheck.isSameIP(req, res)){
+    }
+    if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        return;
     }
 
     const articlesId = req.params.id;
 
     if (filter.filtering(articlesId)) {
         res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/articles"));
-        return false;
+        return;
     }
 
     db.query('SELECT * FROM articles WHERE id = ?', [articlesId], (error, rows) => {
@@ -238,9 +242,10 @@ router.post('/delete/:id', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
-    } else if (!IpCheck.isSameIP(req, res)){
+    }
+    if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        return;
     }
 
     const articlesId = req.params.id; 
@@ -278,14 +283,13 @@ router.get('/:id/update', (req, res) => {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
-    
     if (filter.filtering(articleId)) {
         res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
         return;
     }
     if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        return;
     }
 
     db.query('SELECT * FROM articles WHERE id = ?', [articleId], (error, results) => {
@@ -338,16 +342,12 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     }
     if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        return;
     }
-
     if (!title || !content) {
         res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", `/articles/${articleId}/update`));
- if (!IpCheck.isSameIP(req, res)){
-        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
-    }       return;
-    } 
+        return;
+    }       
     
     if (title.length <= 1 || content.length <= 1) {
         res.send(exception.alertWindow("더 길게 입력해 주세요!", `/articles/${articleId}/update`));
@@ -377,7 +377,7 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
         }
     }
 
-    db.query('SELECT author, image_path FROM web.articles WHERE id = ?', [articleId], (error, results, field) => {
+    db.query('SELECT author, image_path FROM articles WHERE id = ?', [articleId], (error, results, field) => {
         const {author, image_path} = results[0];
 
         // check author and request user are same

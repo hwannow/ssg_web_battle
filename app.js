@@ -1,20 +1,21 @@
 const fs = require('fs');
-const path = require('path');
-const express = require('express');
 //const helmet = require('helmet');
+const path = require('path');
+const express = require('express')
+const session = require('express-session')
 const bodyParser = require('body-parser');
-const session = require('express-session');
-const FileStore = require('session-file-store')(session);
+const FileStore = require('session-file-store')(session)
 
-const authRouter = require('./src/routes/auth');
-const authCheck = require('./src/utils/authCheck.js');
-const articlesRouter = require('./src/routes/articles');
-const commentsRouter = require('./src/routes/comments');
+var authRouter = require('./src/routes/auth');
+var authCheck = require('./src/utils/authCheck.js');
 var IpCheck = require('./src/utils/IpCheck.js');
-var exception = require('./src/utils/exception.js');
+var exception = reuqire('./src/utils/exception.js');
 
-const app = express();
-const port = 3000;
+var articlesRouter = require('./src/routes/articles');
+var commentsRouter = require('./src/routes/comments');
+
+const app = express()
+const port = 3000
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({
@@ -36,30 +37,32 @@ app.use((req, res, next) => {
 //app.use(helmet());
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
+app.get('/', (req, res) => {
+    if (!authCheck.isLogined(req, res)) {
+        res.redirect('/auth/login');
+        return;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/logout"));
+        return;
+    } else {
+        res.redirect('/main');
+        return;
+    }
+})
 
 // Routers
 app.use('/auth', authRouter);
 app.use('/articles', articlesRouter);
 app.use('/comments', commentsRouter);
-app.get('/', (req, res) => {
-    if (!authCheck.isLogined(req, res)) {
-        res.redirect('/auth/login');
-        return false;
-    } else if (!IpCheck.isSameIP(req, res)){
-        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
-    } else {
-        res.redirect('/main');
-        return false;
-    }
-})
+
+
 app.get('/main', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.redirect('/auth/login');
-        return false;
+        return;
     } else if (!IpCheck.isSameIP(req, res)){
-        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
-        return false;
+        res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/logout"));
+        return;
     }
     const filePath = path.join(__dirname, './src/templates/main.html');
     fs.readFile(filePath, 'utf8', function (err, html) {

@@ -11,7 +11,8 @@ router.post('/new', function(req, res) {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
-    } else if (!IpCheck.isSameIP(req, res)){
+    }
+    if (!IpCheck.isSameIP(req, res)){
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
         return false;
     }

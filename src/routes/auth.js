@@ -31,7 +31,6 @@ router.post('/login_process', function (req, res) {
             req.session.nickname = username;
             req.session.usersId = results[0].id;
             req.session.clientIP = req.ip;
-            console.log(req.session.clientIP);
             req.session.save(function () {
                 res.redirect(`/`);
             });
