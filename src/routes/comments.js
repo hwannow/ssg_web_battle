@@ -7,7 +7,7 @@ const exception = require('../utils/exception.js');
 const filter = require('../utils/filter.js');
 
 router.post('/new', function(req, res) {
-    if (!authCheck.isOwner(req, res)) {
+    if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }

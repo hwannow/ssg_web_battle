@@ -296,8 +296,7 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     }
   
     const id = req.params.id; 
-    let title = req.body.title;
-    let content = req.body.content;
+    let {title, content} = req.body;
     let imagePath = '';
     let updateImage = '';
 
@@ -305,7 +304,6 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
         res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
         return false;
     }
-
 
     if(req.file != undefined) {
         if (!req.file.originalname.endsWith('.jpeg')) {
