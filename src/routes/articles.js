@@ -182,7 +182,7 @@ router.get('/:id', (req, res) => {
             </div>
         `;      
 
-        if (imagePath.length > 0) html += `<img src="/../../uploads/${imagePath}" alt="Uploaded Image"></img>`
+        if (imagePath) html += `<img src="/../../uploads/${imagePath}" alt="Uploaded Image"></img>`
         
         html += `
             <hr>
@@ -221,47 +221,65 @@ router.get('/:id', (req, res) => {
 })
 
 router.post('/delete/:id', (req, res) => {
+    
+    // check session connection
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
-    const id = req.params.id; 
 
-    db.query('SELECT image_path FROM articles where id = ?', [id] , (error, results, fields) => {
-        const filePath = path.join(__dirname, `../../uploads/${results[0].image_path}`);
-        fs.unlink(filePath, (err) => {
-            if (err) console.error(err);
-        });
+    const articlesId = req.params.id; 
 
-        db.query('DELETE FROM articles where id =' + id, (error, commentRows) => {
+    db.query('SELECT author, image_path FROM articles where id = ?', [articlesId] , (error, results, fields) => {
+        const {author, image_path} = results[0];
+        
+        // check author and request user are same
+        if(!authCheck.isOwner(req, res, author)) {
+            res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${id}`));
+            return;
+        }
+
+        // delete image if exist
+        if(image_path) {
+            const filePath = path.join(__dirname, `../../uploads/${image_path}`);
+            fs.unlink(filePath, (err) => {
+                if (err) console.error(err);
+            });    
+        }
+        
+        // delete articles data in DB
+        db.query('DELETE FROM articles where id = ?' + [articlesId], (error, commentRows) => {
             if (error) throw error;
         });
+
         res.redirect('/articles');
     });
 });
 
 router.get('/:id/update', (req, res) => {
+    const articleId = req.params.id; 
+
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
-    if (!authCheck.isOwner(req, res)) {
-        res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
+
+    if (filter.filtering(articleId)) {
+        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
         return;
     }
 
-    const id = req.params.id; 
-    if (filter.filtering(id)) {
-        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
-        return false;
-    }
+    db.query('SELECT * FROM articles WHERE id = ?', [articleId], (error, results) => {
+        if (error) throw error;
 
-    db.query('SELECT * FROM articles WHERE id = ?', [id], (error, rows) => {
-        if(error) throw error;
-
-        const {id, title, content, image_path} = rows[0];
+        const {id, author, title, content, image_path} = results[0];
+    
+        if (!authCheck.isOwner(req, res, author)) {
+            res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
+            return;
+        }
         
-        let html = `
+        res.send(`
             <h1>Articles</h1><p><a href="/main">홈으로</a></p><p><a href="/articles/new">글 작성</a></p>
             <h1>글 수정</h1>
             <form action="/articles/${id}/update" method="post" enctype="multipart/form-data">
@@ -278,74 +296,86 @@ router.get('/:id/update', (req, res) => {
             </div>
             <button type="submit">글 작성</button>
             </form>
-        `;
-
-        res.send(html);
+        `);
     });
 });
   
 
 router.post('/:id/update', upload.single('image'), (req, res) => {
+
+    const articleId = req.params.id; 
+    const {title, content} = req.body;
+
+    // check session connection
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
     }
-    if (!authCheck.isOwner(req, res)) {
-        res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
+
+    // filtering input
+    if (filter.filtering(articleId)) {
+        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
         return;
     }
-  
-    const id = req.params.id; 
-    let {title, content} = req.body;
-    let imagePath = '';
-    let updateImage = '';
 
-    if (filter.filtering(id)) {
-        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
-        return false;
-    }
+    if (!title || !content) {
+        res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", `/articles/${articleId}/update`));
+        return;
+    } 
+    
+    if (title.length <= 1 || content.length <= 1) {
+        res.send(exception.alertWindow("더 길게 입력해 주세요!", `/articles/${articleId}/update`));
+        return;
+    } 
+
+    if (title.length > 100 || content.length > 100) {
+        res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", `/articles/${articleId}/update`));
+        return;
+    } 
+    
+    if (filter.filtering(title) || filter.filtering(content)) {
+        res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles/${articleId}/update`));
+        return;
+    } 
+
+    let finalImagePath = null;
 
     if(req.file != undefined) {
         if (!req.file.originalname.endsWith('.jpeg')) {
-            res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", `/articles/${id}/update`));
+            res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", `/articles/${articleId}/update`));
+            return;
         }
-        
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
-            imagePath = req.file.path.slice(startIndex); 
+            finalImagePath = req.file.path.slice(startIndex); 
         }
     }
 
+    db.query('SELECT author, image_path FROM web.articles WHERE id = ?', [articleId], (error, results, field) => {
+        const {author, image_path} = results[0];
 
-    if (title && content) {
-        if (title.length <= 1 || content.length <= 1) {
-            res.send(exception.alertWindow("더 길게 입력해 주세요!", `/articles/${id}/update`));
-        } else if (title.length > 100 || content.length > 100) {
-            res.send(exception.alertWindow("제목과 내용은 100자까지 입력 가능합니다.", `/articles/${id}/update`));
+        // check author and request user are same
+        if (!authCheck.isOwner(req, res, author)) {
+            res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
+            return;
         }
-        else if (filter.filtering(title) || filter.filtering(content)) {
-            res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles/${id}/update`));
-        } else {
-            db.query('SELECT image_path FROM user_info.articles WHERE id = ?', [id], (error, result, field) => {
-                updateImage = result[0].image_path;
-                if (imagePath == '') {
-                    imagePath = updateImage;
-                } else {
-                    const filePath = path.join(__dirname, `../../uploads/${updateImage}`);
-                    fs.unlink(filePath, (err) => {
-                        if (err) console.error(err);
-                    });
-                }
-                db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, imagePath, id], (error, results, fields) => {
-                    if (error) throw error;
-                    res.redirect('/articles');
-                });
-            });
+
+        /* if no file uploaded in current request, inherit.
+            else if file exist in current request & old image exist, delete old file
+        */
+        if (!finalImagePath) {
+            finalImagePath = image_path;
+        } else if (image_path) {
+            const filePath = path.join(__dirname, `../../uploads/${image_path}`);
+            fs.unlink(filePath, (err) => {if (err) console.error(err);});
         }
-    } else {
-        res.send(exception.alertWindow("입력되지 않은 값이 있습니다.", `/articles/${id}/update`));
-    }
-  
+
+
+        db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, finalImagePath, articleId], (error, results, fields) => {
+            if (error) throw error;
+            res.redirect('/articles');
+        });
+    });
 });
 
 

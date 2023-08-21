@@ -1,19 +1,18 @@
 const fs = require('fs');
-//const helmet = require('helmet');
 const path = require('path');
-const express = require('express')
-const session = require('express-session')
+const express = require('express');
+//const helmet = require('helmet');
 const bodyParser = require('body-parser');
-const FileStore = require('session-file-store')(session)
+const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 
-var authRouter = require('./src/routes/auth');
-var authCheck = require('./src/utils/authCheck.js');
+const authRouter = require('./src/routes/auth');
+const authCheck = require('./src/utils/authCheck.js');
+const articlesRouter = require('./src/routes/articles');
+const commentsRouter = require('./src/routes/comments');
 
-var articlesRouter = require('./src/routes/articles');
-var commentsRouter = require('./src/routes/comments');
-
-const app = express()
-const port = 3000
+const app = express();
+const port = 3000;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({
@@ -31,6 +30,11 @@ app.use(session({
 //app.use(helmet());
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
+
+// Routers
+app.use('/auth', authRouter);
+app.use('/articles', articlesRouter);
+app.use('/comments', commentsRouter);
 app.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.redirect('/auth/login');
@@ -40,17 +44,10 @@ app.get('/', (req, res) => {
         return false;
     }
 })
-
-// Routers
-app.use('/auth', authRouter);
-app.use('/articles', articlesRouter);
-app.use('/comments', commentsRouter);
-
-
 app.get('/main', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.redirect('/auth/login');
-        return false;
+        return;
     }
     const filePath = path.join(__dirname, './src/templates/main.html');
     fs.readFile(filePath, 'utf8', function (err, html) {
@@ -58,6 +55,7 @@ app.get('/main', (req, res) => {
     });
 })
 
+// listen carefully
 app.listen(port, () => {
     console.log(`Node.js app listening on port ${port}`)
 })
