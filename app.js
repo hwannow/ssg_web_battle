@@ -9,7 +9,7 @@ const FileStore = require('session-file-store')(session)
 var authRouter = require('./src/routes/auth');
 var authCheck = require('./src/utils/authCheck.js');
 var IpCheck = require('./src/utils/IpCheck.js');
-var exception = reuqire('./src/utils/exception.js');
+var exception = require('./src/utils/exception.js');
 
 var articlesRouter = require('./src/routes/articles');
 var commentsRouter = require('./src/routes/comments');
@@ -21,7 +21,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({
     cookie: {	//세션 쿠키 설정 (세션 관리 시 클라이언트에 보내는 쿠키)
         httpOnly: true, // 자바스크립트를 통해 세션 쿠키를 사용할 수 없도록 함
-        Secure: true
+        Secure: true,
+        maxAge: 600000
     },
     secure: true,
     secret: process.env.SESSION_SECRET_KEY,

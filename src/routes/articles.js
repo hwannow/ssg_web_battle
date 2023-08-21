@@ -121,6 +121,7 @@ router.post('/new', upload.single('image'), (req, res) => {
     if(req.file !== undefined) {
         if (!req.file.originalname.endsWith('.jpeg')) {
             res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/new"));
+            return;
         }
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
