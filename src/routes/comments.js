@@ -5,11 +5,15 @@ const db = require('../utils/database');
 const authCheck = require('../utils/authCheck.js');
 const exception = require('../utils/exception.js');
 const filter = require('../utils/filter.js');
+const IpCheck = require('../utils/IpCheck.js');
 
 router.post('/new', function(req, res) {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
 
     let {content, usersId, articlesId} = req.body;

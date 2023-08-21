@@ -9,6 +9,7 @@ const db = require('../utils/database');
 const authCheck = require('../utils/authCheck.js');
 const exception = require('../utils/exception.js');
 const filter = require('../utils/filter.js');
+const IpCheck = require('../utils/IpCheck.js');
 
 require('dotenv').config();
 
@@ -49,8 +50,10 @@ router.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
-    
     db.query('SELECT * FROM articles', (error, rows) => {
         if (error) throw error;
         
@@ -87,6 +90,9 @@ router.get('/new', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
 
     const filePath = path.join(__dirname, '../templates/articleForm.html');
@@ -100,6 +106,9 @@ router.post('/new', upload.single('image'), (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
     
     const {title, content} = req.body;
@@ -139,6 +148,9 @@ router.get('/:id', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
 
     const articlesId = req.params.id;
@@ -224,6 +236,9 @@ router.post('/delete/:id', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
         return;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
     const id = req.params.id; 
 
@@ -233,7 +248,7 @@ router.post('/delete/:id', (req, res) => {
             if (err) console.error(err);
         });
 
-        db.query('DELETE FROM articles where id =' + id, (error, commentRows) => {
+        db.query('DELETE FROM articles where id = ?', [id], (error, commentRows) => {
             if (error) throw error;
         });
         res.redirect('/articles');
@@ -248,6 +263,10 @@ router.get('/:id/update', (req, res) => {
     if (!authCheck.isOwner(req, res)) {
         res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
         return;
+    }
+    if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
 
     const id = req.params.id; 
@@ -293,6 +312,10 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     if (!authCheck.isOwner(req, res)) {
         res.send(exception.alertWindow("사용자 정보가 일치하지 않습니다.", `/articles/${req.params.id}`));
         return;
+    }
+    if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
     }
   
     const id = req.params.id; 

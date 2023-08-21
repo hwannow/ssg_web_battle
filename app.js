@@ -8,6 +8,8 @@ const FileStore = require('session-file-store')(session)
 
 var authRouter = require('./src/routes/auth');
 var authCheck = require('./src/utils/authCheck.js');
+var IpCheck = require('./src/utils/IpCheck.js');
+var exception = require('./src/utils/exception.js');
 
 var articlesRouter = require('./src/routes/articles');
 var commentsRouter = require('./src/routes/comments');
@@ -27,6 +29,10 @@ app.use(session({
     saveUninitialized: true,
     store: new FileStore(),
 }))
+app.use((req, res, next) => {
+    req.session.clientIP = req.ip; // 클라이언트의 IP 주소 저장
+    next();
+});
 
 //app.use(helmet());
 app.use('/uploads', express.static(__dirname + '/uploads'));
@@ -34,6 +40,9 @@ app.use('/uploads', express.static(__dirname + '/uploads'));
 app.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.redirect('/auth/login');
+        return false;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
         return false;
     } else {
         res.redirect('/main');
@@ -50,6 +59,9 @@ app.use('/comments', commentsRouter);
 app.get('/main', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.redirect('/auth/login');
+        return false;
+    } else if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
         return false;
     }
     const filePath = path.join(__dirname, './src/templates/main.html');
