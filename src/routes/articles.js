@@ -199,7 +199,9 @@ router.get('/:id', (req, res) => {
             </div>
         `;      
 
-        if (imagePath) html += `<img src="/../../uploads/${imagePath}" alt="Uploaded Image"></img>`
+        if (imagePath) html += `<img src="/../../uploads/${imagePath}" alt="Uploaded Image"></img>
+        <a href="/articles/download/${id}">파일 다운로드</a>
+        `
         
         html += `
             <hr>
@@ -237,6 +239,30 @@ router.get('/:id', (req, res) => {
     });
 })
 
+router.get('/download/:id', (req,res) => {
+    const articleId = req.params.id; 
+
+    if (!authCheck.isLogined(req, res)) {
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
+    }
+    if (filter.filtering(articleId)) {
+        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
+        return;
+    }
+    if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return;
+    }
+
+    db.query('SELECT * FROM articles WHERE id = ?', [articleId], (error, results) => {
+        const image_path = results[0].image_path;
+        const file = `/../../uploads/${image_path}`
+        if (error) throw error;
+        res.download(file);
+    });
+});
+
 router.post('/delete/:id', (req, res) => {
     
     // check session connection
@@ -269,7 +295,7 @@ router.post('/delete/:id', (req, res) => {
         }
         
         // delete articles data in DB
-        db.query('DELETE FROM articles where id = ?', [articlesId], (error, commentRows) => {
+        db.query('DELETE FROM articles where id = ?', [articlesId], (error, results) => {
             if (error) throw error;
         });
 
