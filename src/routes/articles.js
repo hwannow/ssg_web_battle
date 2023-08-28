@@ -39,7 +39,8 @@ function escapeHtml(text) {
         "$": '&#36;',
         "(": '&#40;',
         ")": '&#41;',
-        "|": "&#124"
+        "|": "&#124",
+    	"`": "&#96;"
     };
     if (text == null) return;
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
