@@ -14,21 +14,21 @@ var exception = require('./src/utils/exception.js');
 var articlesRouter = require('./src/routes/articles');
 var commentsRouter = require('./src/routes/comments');
 
-const app = express()
-const port = 3000
+const app = express();
+const port = 80;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({
-    cookie: {	//세션 쿠키 설정 (세션 관리 시 클라이언트에 보내는 쿠키)
+	secure: true,
+	secret: process.env.SESSION_SECRET_KEY,
+	resave: true,
+	saveUninitialized: true,
+	store: new FileStore(),
+	cookie: {	//세션 쿠키 설정 (세션 관리 시 클라이언트에 보내는 쿠키)
         httpOnly: true, // 자바스크립트를 통해 세션 쿠키를 사용할 수 없도록 함
-        Secure: true,
-        maxAge: 600000
-    },
-    secure: true,
-    secret: process.env.SESSION_SECRET_KEY,
-    resave: false,
-    saveUninitialized: true,
-    store: new FileStore(),
+        secure: false,
+        maxAge: 60000000
+    }
 }))
 app.use((req, res, next) => {
     req.session.clientIP = req.ip; // 클라이언트의 IP 주소 저장
