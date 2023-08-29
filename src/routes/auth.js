@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 const express = require('express');
 const router = express.Router();
@@ -23,13 +24,15 @@ router.post('/login_process', function (req, res) {
         res.send(exception.alertWindow("아이디와 비밀번호를 입력하세요!", "/auth/login"));   
         return;
     }
-
-    db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, pwd], function(error, results, fields) {
+    let hashAlgorithm = crypto.createHash('sha512');
+    let hashing = hashAlgorithm.update(pwd);
+    let hashedPwd = hashing.digest('base64');
+    db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, hashedPwd], function(error, results, fields) {
         if (error) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/login"));
             return;
         }
-        if (results.length > 0 && results[0].password === pwd) {       // db에서의 반환값이 있으면 로그인 성공
+        if (results.length > 0 && results[0].password === hashedPwd) {       // db에서의 반환값이 있으면 로그인 성공
             req.session.is_logined = true;      // 세션 정보 갱신
             req.session.nickname = username;
             req.session.usersId = results[0].id;
@@ -88,12 +91,16 @@ router.post('/register_process', function(req, res) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/login"));
             return;
         }
+        let hashAlgorithm = crypto.createHash('sha512');
+        let hashing = hashAlgorithm.update(pwd);
+        let hashedPwd = hashing.digest('base64');
         if (results.length <= 0 && pwd === pwd2) {     // DB에 같은 이름의 회원아이디가 없고, 비밀번호가 올바르게 입력된 경우 
-            db.query('INSERT INTO users (username, password) VALUES(?,?)', [username, pwd], function (error, data) {
+            db.query('INSERT INTO users (username, password) VALUES(?,?)', [username, hashedPwd], function (error, data) {
                 if (error) {
                     res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/login"));
                     return;
                 }
+
                 res.send(exception.alertWindow("회원가입이 완료되었습니다!", "/"));
             });
         } else if (pwd != pwd2) {                     // 비밀번호가 올바르게 입력되지 않은 경우
