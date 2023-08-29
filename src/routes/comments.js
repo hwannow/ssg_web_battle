@@ -34,7 +34,9 @@ router.post('/new', function(req, res) {
     }
 
     db.query('INSERT INTO comments (content, users_id, articles_id) VALUES (?, ?, ?)', [content, usersId, articlesId], function(error, results, fields) {
-        if(error) throw error;
+        if(error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", '/articles'));
+        }
         res.redirect('/articles/' + articlesId);
     });
   
