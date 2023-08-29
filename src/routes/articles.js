@@ -15,17 +15,29 @@ require('dotenv').config();
 
 const multer = require('multer');
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, __dirname + '/../../uploads/')
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = crypto.createHash('md5').update(Date.now().toString()).digest('hex');
-        cb(null, uniqueSuffix.toString() + ".jpeg")
+const upload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, __dirname + '/../../uploads/')
+        },
+        filename: (req, file, cb) => {
+            const uniqueSuffix = crypto.createHash('md5').update(Date.now().toString()).digest('hex');
+            cb(null, uniqueSuffix.toString() + ".jpeg")
+        },
+    }),
+    limits: {fileSize : 5 * 1024 * 1024},
+    fileFilter: function(req, file, done) {
+        if (file.mimetype.lastIndexOf('jpeg') > -1) {
+            done(null, true);
+        } else if (file.originalname.includes('/')) {
+            done(null, false);
+        } else {
+            done(null, false);
+        }
     }
+
 });
 
-const upload = multer({ storage: storage });
 function escapeHtml(text) {
     let map = {
         '&': '&amp;',
@@ -123,13 +135,14 @@ router.post('/new', upload.single('image'), (req, res) => {
     let imagePath = '';
 
     if(req.file !== undefined) {
-        if (!req.file.originalname.endsWith('.jpeg')) {
-            res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/new"));
-            return;
-        } 
-        else if (req.file.originalname.includes('/') || req.file.originalname.includes('.')){
-            res.send(exception.alertWindow("적절하지 않은 파일명입니다.", "/articles/new"));
-        }
+        // if (!req.file.originalname.endsWith('.jpeg')) {
+        //     res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/new"));
+        //     return;
+        // } 
+        // if (req.file.originalname.includes('/')){
+        //     res.send(exception.alertWindow("적절하지 않은 파일명입니다.", "/articles/new"));
+        //     return;
+        // }
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
             imagePath += req.file.path.slice(startIndex); 
@@ -444,13 +457,13 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     let finalImagePath = null;
 
     if(req.file != undefined) {
-        if (!req.file.originalname.endsWith('.jpeg')) {
-            res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", `/articles/${articleId}/update`));
-            return;
-        }
-        else if (req.file.originalname.includes('/') || req.file.originalname.includes('.')){
-            res.send(exception.alertWindow("적절하지 않은 파일명입니다.", "/articles/new"));
-        }
+        // if (!req.file.originalname.endsWith('.jpeg')) {
+        //     res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", `/articles/${articleId}/update`));
+        //     return;
+        // }
+        // else if (req.file.originalname.includes('/')){
+        //     res.send(exception.alertWindow("적절하지 않은 파일명입니다.", "/articles/new"));
+        // }
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
             finalImagePath = req.file.path.slice(startIndex); 
