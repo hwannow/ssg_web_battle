@@ -57,7 +57,10 @@ router.get('/', (req, res) => {
         return;
     }
     db.query('SELECT * FROM articles', (error, rows) => {
-        if (error) throw error;
+        if (error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+            return;
+        }
         
         let html = `
             <h1>Articles</h1>
@@ -142,7 +145,10 @@ router.post('/new', upload.single('image'), (req, res) => {
             res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", "/articles/new"));
         } else {
             db.query('INSERT INTO articles (title, content, author, image_path) VALUES (?, ?, ?, ?)', [title, content, author, imagePath], function(error, results, fields) {
-                if (error) throw error; 
+                if (error) {
+                    res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+                    return;
+                }
                 res.redirect('/articles');
             });
         }
@@ -165,12 +171,15 @@ router.get('/:id', (req, res) => {
     const articlesId = req.params.id;
 
     if (filter.filtering(articlesId)) {
-        res.send(exception.alertWindow("잘못된 접근입니다.", "/auth/articles"));
+        res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
         return;
     }
 
     db.query('SELECT * FROM articles WHERE id = ?', [articlesId], (error, rows) => {
-        if (error) throw error;
+        if (error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+            return;
+        }
         if (rows.length === 0) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
             return;
@@ -223,7 +232,10 @@ router.get('/:id', (req, res) => {
         `;
 
         db.query('SELECT comments.id, comments.content, users.username FROM comments INNER JOIN users ON comments.users_id = users.id WHERE comments.articles_id = ?', [articlesId], function(error, commentRows) {
-            if (error) throw error;
+            if (error) {
+                res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+                return;
+            }
           
             html += `
                 <h3>댓글</h3>
@@ -264,7 +276,10 @@ router.get('/download/:id', (req,res) => {
     }
 
     db.query('SELECT * FROM articles WHERE id = ?', [articleId], (error, results) => {
-        if (error) throw error;
+        if (error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+            return;
+        }
         if (results.length === 0) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
             return;
@@ -290,7 +305,10 @@ router.post('/delete/:id', (req, res) => {
     const articlesId = req.params.id; 
 
     db.query('SELECT author, image_path FROM articles where id = ?', [articlesId] , (error, results, fields) => {
-        if (error) throw error;
+        if (error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+            return;
+        }
         if (results.length === 0) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
             return;
@@ -314,7 +332,10 @@ router.post('/delete/:id', (req, res) => {
         
         // delete articles data in DB
         db.query('DELETE FROM articles where id = ?', [articlesId], (error, results) => {
-            if (error) throw error;
+            if (error) {
+                res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+                return;
+            }
             if (results.length === 0) {
                 res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
                 return;
@@ -342,7 +363,10 @@ router.get('/:id/update', (req, res) => {
     }
 
     db.query('SELECT * FROM articles WHERE id = ?', [articleId], (error, results) => {
-        if (error) throw error;
+        if (error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+            return;
+        }
         if (results.length === 0) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
             return;
@@ -434,7 +458,10 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     }
 
     db.query('SELECT author, image_path FROM articles WHERE id = ?', [articleId], (error, results, field) => {
-        if (error) throw error;
+        if (error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+            return;
+        }
         if (results.length === 0) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
             return;
@@ -459,7 +486,10 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
 
 
         db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, finalImagePath, articleId], (error, results, fields) => {
-            if (error) throw error;
+            if (error) {
+                res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
+                return;
+            }
             if (results.length === 0) {
                 res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
                 return;
