@@ -18,6 +18,7 @@ const app = express();
 const port = 80;
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({ limit: '5mb' }))
 app.use(session({
 	secure: true,
 	secret: process.env.SESSION_SECRET_KEY,
