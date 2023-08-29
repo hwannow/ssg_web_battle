@@ -123,6 +123,9 @@ router.post('/new', upload.single('image'), (req, res) => {
         if (!req.file.originalname.endsWith('.jpeg')) {
             res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", "/articles/new"));
             return;
+        } 
+        else if (req.file.originalname.includes('/') || req.file.originalname.includes('.')){
+            res.send(exception.alertWindow("적절하지 않은 파일명입니다.", "/articles/new"));
         }
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
@@ -168,7 +171,11 @@ router.get('/:id', (req, res) => {
 
     db.query('SELECT * FROM articles WHERE id = ?', [articlesId], (error, rows) => {
         if (error) throw error;
-        
+        if (rows.length === 0) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
+            return;
+        }
+
         const id = rows[0].id;
         const title = rows[0].title;
         const content = rows[0].content;
@@ -257,9 +264,13 @@ router.get('/download/:id', (req,res) => {
     }
 
     db.query('SELECT * FROM articles WHERE id = ?', [articleId], (error, results) => {
+        if (error) throw error;
+        if (results.length === 0) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
+            return;
+        }
         const image_path = results[0].image_path;
         const file = `/../../uploads/${image_path}`
-        if (error) throw error;
         res.download(file);
     });
 });
@@ -279,6 +290,12 @@ router.post('/delete/:id', (req, res) => {
     const articlesId = req.params.id; 
 
     db.query('SELECT author, image_path FROM articles where id = ?', [articlesId] , (error, results, fields) => {
+        if (error) throw error;
+        if (results.length === 0) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
+            return;
+        }
+        
         const {author, image_path} = results[0];
         
         // check author and request user are same
@@ -298,6 +315,10 @@ router.post('/delete/:id', (req, res) => {
         // delete articles data in DB
         db.query('DELETE FROM articles where id = ?', [articlesId], (error, results) => {
             if (error) throw error;
+            if (results.length === 0) {
+                res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
+                return;
+            }
         });
 
         res.redirect('/articles');
@@ -322,6 +343,10 @@ router.get('/:id/update', (req, res) => {
 
     db.query('SELECT * FROM articles WHERE id = ?', [articleId], (error, results) => {
         if (error) throw error;
+        if (results.length === 0) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
+            return;
+        }
 
         const {id, author, title, content, image_path} = results[0];
     
@@ -399,6 +424,9 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
             res.send(exception.alertWindow("jpeg 파일만 업로드 가능합니다.", `/articles/${articleId}/update`));
             return;
         }
+        else if (req.file.originalname.includes('/') || req.file.originalname.includes('.')){
+            res.send(exception.alertWindow("적절하지 않은 파일명입니다.", "/articles/new"));
+        }
         const startIndex = req.file.path.indexOf('uploads') + 8;
         if (startIndex !== -1) {
             finalImagePath = req.file.path.slice(startIndex); 
@@ -406,6 +434,11 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
     }
 
     db.query('SELECT author, image_path FROM articles WHERE id = ?', [articleId], (error, results, field) => {
+        if (error) throw error;
+        if (results.length === 0) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
+            return;
+        }
         const {author, image_path} = results[0];
 
         // check author and request user are same
@@ -427,6 +460,10 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
 
         db.query('UPDATE articles SET title = ?, content = ?, image_path = ? WHERE id = ?', [title, content, finalImagePath, articleId], (error, results, fields) => {
             if (error) throw error;
+            if (results.length === 0) {
+                res.send(exception.alertWindow("잘못된 접근입니다.", "/main"));
+                return;
+            }
             res.redirect('/articles');
         });
     });
