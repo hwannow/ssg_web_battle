@@ -18,7 +18,7 @@ connection.getConnection((error) => {
     return;
   }
   console.log('Successfully connected to MySQL!');
-/*
+
   fs.readFile('./setting.sql', 'utf8', (readErr, data) => {
     if (readErr) {
       console.error('Error reading file:', readErr);
@@ -36,7 +36,7 @@ connection.getConnection((error) => {
       console.log('Successfully create tables');
     });
   });
-*/
+
 }
 );
 
