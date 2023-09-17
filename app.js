@@ -39,7 +39,6 @@ app.use((req, res, next) => {
 
 //app.use(helmet());
 app.use('/uploads', express.static(__dirname + '/uploads'));
-app.use(express.static('./src/templates/roulette.css'));
 
 app.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {

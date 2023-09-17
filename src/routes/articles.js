@@ -174,12 +174,7 @@ router.post('/new', upload.single('image'), (req, res) => {
   
 });
 
-router.post('/select', (req, res) => {
-    db.query('UPDATE articles SET selection = ? WHERE id = ?', [commentsId, articlesId], function(error, results, fields) {
-        if (error) return false;
-        return true;
-    });
-});
+
 
   
 router.get('/:id', (req, res) => {
@@ -273,10 +268,18 @@ router.get('/:id', (req, res) => {
             for (let i = 0; i < commentRows.length; i++) {
                 const commentContent = commentRows[i].content;
                 const commentAuthor = commentRows[i].username;
+                const commentId = commentRows[i].id;
                 
-                if (selection == 0) {
+                if (selection === 0 && req.session.nickname === author && commentAuthor !== author) { //채택 안 한 글에서 채택 버튼 보이게
                     html += `
-                        <button onclick="select()">click me</button>
+                        <form action="/articles/select/${articlesId}" method="POST">
+                            <input type="hidden" name="commentId" value="${commentId}">
+                            <button type="submit">채택하기</button>
+                        </form>
+                    `
+                } else if (selection !== 0 && selection === commentId){
+                    html += `
+                        <h2>채택된 댓글!</h2>
                     `
                 }
                 
@@ -337,6 +340,8 @@ router.get('/:id', (req, res) => {
                         </script>
                     `
                 }
+
+                //here code
                 res.send(html);
             });
           
@@ -603,19 +608,24 @@ router.post('/like/:articlesId', function(req, res) {
         return false;
     }
 
+    if (filter.filtering(articlesId)) {
+        res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles`));
+        return;
+    } 
+
     db.query('SELECT * FROM articles_users where users_id = ? and articles_id = ?', [usersId, articlesId], function(error, results, fields){
         if (error) {
-            res.send(exception.alertWindow("잘못된 접근입니다.", `/articles/like/${articlesId}`));
+            res.send(exception.alertWindow("잘못된 접근입니다.", `/articles/${articlesId}`));
         	return;
 	    }
         if(results.length != 0) {
-            res.send(exception.alertWindow("이미 좋아요를 눌렀습니다.", `/articles/like/${articlesId}`));
+            res.send(exception.alertWindow("이미 좋아요를 눌렀습니다.", `/articles/${articlesId}`));
             return;
         }
 
         db.query('INSERT INTO articles_users (articles_id, users_id) VALUES (?, ?)', [articlesId, usersId], function(error, results, fields) {
             if (error) {
-                res.send(exception.alertWindow("잘못된 접근입니다.", `/articles/like/${articlesId}`));
+                res.send(exception.alertWindow("잘못된 접근입니다.", `/articles/${articlesId}`));
                 return;
             }
             res.status(200).send('요청이 정상 처리되었습니다.');
@@ -626,6 +636,64 @@ router.post('/like/:articlesId', function(req, res) {
                     return;
                 }
             })
+        });
+    });
+})
+
+router.post('/select/:articlesId', function(req, res) {
+    if (!authCheck.isLogined(req, res)) {
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
+    }
+    if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
+    }
+
+    const articlesId = req.params.articlesId;
+    const commentId = req.body.commentId;
+
+    if(!commentId) {
+        res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
+        return false;
+    }
+
+    if (filter.filtering(articlesId)) {
+        res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles`));
+        return;
+    }
+
+    db.query("SELECT selection FROM articles WHERE id = ?", [articlesId], function(error, results, fields){
+        if (error) {
+            res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
+            return;
+        }
+        const selection = results[0].selection;
+        if (selection !== 0) {
+            res.send(exception.alertWindow("이미 채택이 끝난 게시글입니다.", `/articles/${articlesId}`));
+            return;
+        }
+        db.query('UPDATE articles SET selection = ? WHERE id = ?', [commentId, articlesId], function(error, results, field) {
+            if (error) {
+                res.send(exception.alertWindow("부적절한 접근입니다.", `/articles/${articlesId}`));
+                return;
+            }
+            db.query('SELECT users_id FROM comments WHERE id = ?', [commentId], function(error, results, field) {
+                if (error) {
+                    res.send(exception.alertWindow("부적절한 접근입니다.", `/articles/${articlesId}`));
+                    return;
+                }
+                const userId = results[0].users_id;
+                console.log(userId);
+                db.query('UPDATE users SET coin = coin + 10 WHERE id = ?', [userId], function(error, results, field) {
+                    if (error) {
+                        res.send(exception.alertWindow("부적절한 접근입니다.", `/articles/${articlesId}`));
+                        return;
+                    }
+                    res.send(exception.alertWindow("채택되었습니다!", `/articles/${articlesId}`));
+                    return;
+                });
+            });
         });
     });
 })
