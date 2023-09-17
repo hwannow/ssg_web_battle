@@ -8,6 +8,7 @@ const connection = mysql.createPool({
   user     : process.env.DB_USER,
   password : process.env.DB_PASSWORD,
   database : process.env.DB_DATABASE_NAME,
+  dateStrings: "date",
   enableKeepAlive: true,
   multipleStatements: true
 });
@@ -37,7 +38,6 @@ connection.getConnection((error) => {
     });
   });
 
-}
-);
+});
 
 module.exports = connection;

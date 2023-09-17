@@ -68,6 +68,7 @@ router.get('/', (req, res) => {
         res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
         return;
     }
+
     db.query('SELECT * FROM articles', (error, rows) => {
         if (error) {
             res.send(exception.alertWindow("잘못된 접근입니다.", "/articles"));
@@ -90,8 +91,8 @@ router.get('/', (req, res) => {
             const articleHtml = `
                 <div>
                 <a href="articles/${id}"><h2>${escapeHtml(title)}</h2></a>
-                <p>Author: ${escapeHtml(author)}</p>
-                <p>Created At: ${createdAt}</p>
+                <p><b>작성자: ${escapeHtml(author)}</b></p>
+                <p><b>작성일: ${createdAt}</b></p>
                 <p>${escapeHtml(content)}</p>
                 </div>
                 <hr>
@@ -204,6 +205,7 @@ router.get('/:id', (req, res) => {
         const author = rows[0].author;
         const createdAt = rows[0].created_at;
         const imagePath = rows[0].image_path;
+        const likeCnt = rows[0].like_cnt;
         
         let html = `
             <h1>Articles</h1>
@@ -223,9 +225,10 @@ router.get('/:id', (req, res) => {
         }
 
         html += `
-                <p>Author: ${escapeHtml(author)}</p>
-                <p>Created At: ${createdAt}</p>
-                <p>${escapeHtml(content)}</p>    
+                <p><b>작성자: ${escapeHtml(author)}</b></p>
+                <p><b>작성일: ${createdAt}</b></p>
+                <p><b>추천수: ${likeCnt}</b><button id="likeBnt" onclick="doAction()">하트 꾹</button></p>
+                <p>${escapeHtml(content)}</p>
             </div>
         `;      
 
@@ -266,8 +269,57 @@ router.get('/:id', (req, res) => {
                     </div>
                 `;
             }
+
+            html += `
+                <script>
+                    async function doAction() {
+                        try {
+                            const currentURL = window.location.href;
+                            const articlesId = currentURL.slice(currentURL.indexOf('articles') + 9);
+                
+                            let url = '/articles/like/' + articlesId;
+                
+                            const response = await fetch(url, {
+                                method: 'POST'
+                            });
+                
+                            if (response.ok) {
+                                const likeBnt = document.getElementById("likeBnt");
+                                if (likeBnt) {
+                                    likeBnt.remove();
+                                } else {
+                                console.error("likeBnt 버튼이 존재하지 않습니다.");
+                                }
+                            } else {
+                                console.error('요청이 실패했습니다.');
+                            }
+                        } catch (error) {
+                            console.error('오류 발생:', error);
+                        }
+                    }
+            `
+            db.query('SELECT * FROM articles_users where users_id = ? and articles_id = ?', [req.session.usersId, articlesId], function(error, results, fields) {
+                if(error) {
+                    console.log("304 line");
+                }
+                if(results.length == 0) {
+                    html += `
+                    </script>
+                    `;
+                } else {
+                    html += `
+                        const likeBnt = document.getElementById("likeBnt");
+                        if (likeBnt) {
+                            likeBnt.remove();
+                        } else {
+                            console.error("likeBnt 버튼이 존재하지 않습니다.");
+                        }
+                        </script>
+                    `
+                }
+                res.send(html);
+            });
           
-            res.send(html);
         });
     });
 })
@@ -511,6 +563,52 @@ router.post('/:id/update', upload.single('image'), (req, res) => {
         });
     });
 });
+
+
+router.post('/like/:articlesId', function(req, res) {
+    if (!authCheck.isLogined(req, res)) {
+        res.send(exception.alertWindow("로그인 정보가 잘못됐습니다.", "/auth/login"));
+        return;
+    }
+    if (!IpCheck.isSameIP(req, res)){
+        res.send(exception.alertWindow("다시 로그인해 주세요!", "/auth/logout"));
+        return false;
+    }
+
+    const articlesId = req.params.articlesId;
+    const usersId = req.session.usersId;
+
+    if(!articlesId || !usersId) {
+        res.status(400).send("입력되지 않은 값이 있습니다.");
+        return false;
+    }
+
+    db.query('SELECT * FROM articles_users where users_id = ? and articles_id = ?', [usersId, articlesId], function(error, results, fields){
+        if (error) {
+            res.send(exception.alertWindow("잘못된 접근입니다.", `/articles/like/${articlesId}`));
+        	return;
+	    }
+        if(results.length != 0) {
+            res.send(exception.alertWindow("이미 좋아요를 눌렀습니다.", `/articles/like/${articlesId}`));
+            return;
+        }
+
+        db.query('INSERT INTO articles_users (articles_id, users_id) VALUES (?, ?)', [articlesId, usersId], function(error, results, fields) {
+            if (error) {
+                res.send(exception.alertWindow("잘못된 접근입니다.", `/articles/like/${articlesId}`));
+                return;
+            }
+            res.status(200).send('요청이 정상 처리되었습니다.');
+      
+            db.query('UPDATE articles SET like_cnt = like_cnt + 1 WHERE id = ?', [articlesId], function(error, results, field) {
+                if (error) {
+                    console.log("like increase error");
+                    return;
+                }
+            })
+        });
+    });
+})
 
 
 module.exports = router;
