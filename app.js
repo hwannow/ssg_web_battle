@@ -14,6 +14,9 @@ var exception = require('./src/utils/exception.js');
 var articlesRouter = require('./src/routes/articles.js');
 var commentsRouter = require('./src/routes/comments.js');
 var rouletteRouter = require('./src/routes/roulette.js');
+var articlesRouter = require('./src/routes/articles');
+var commentsRouter = require('./src/routes/comments');
+var adminRouter = require('./src/routes/admin');
 
 const app = express();
 const port = 80;
@@ -59,6 +62,7 @@ app.use('/auth', authRouter);
 app.use('/articles', articlesRouter);
 app.use('/comments', commentsRouter);
 app.use('/roulette', rouletteRouter);
+app.use('/admin', adminRouter);
 
 
 app.get('/main', (req, res) => {
