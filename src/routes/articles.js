@@ -684,7 +684,6 @@ router.post('/select/:articlesId', function(req, res) {
                     return;
                 }
                 const userId = results[0].users_id;
-                console.log(userId);
                 db.query('UPDATE users SET coin = coin + 10 WHERE id = ?', [userId], function(error, results, field) {
                     if (error) {
                         res.send(exception.alertWindow("부적절한 접근입니다.", `/articles/${articlesId}`));
