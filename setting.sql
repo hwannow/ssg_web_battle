@@ -7,6 +7,7 @@ CREATE TABLE users (
   username varchar(255) NOT NULL,
   password varchar(255) NOT NULL,
   school varchar(255) NOT NULL,
+  coin int DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -17,6 +18,8 @@ CREATE TABLE articles (
   author varchar(50) DEFAULT NULL,
   created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   image_path varchar(255) DEFAULT NULL,
+  selection int NOT NULL DEFAULT 0,
+  like_cnt int NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -32,3 +35,10 @@ CREATE TABLE comments (
   CONSTRAINT comments_ibfk_2 FOREIGN KEY (articles_id) REFERENCES articles (id)
 );
 
+CREATE TABLE articles_users (
+  articles_id int not null,
+  users_id int NOT NULL,
+  FOREIGN KEY (articles_id) REFERENCES articles (id),
+  FOREIGN KEY (users_id) REFERENCES users (id),
+  PRIMARY KEY (articles_id, users_id)
+);
