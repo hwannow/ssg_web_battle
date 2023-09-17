@@ -58,6 +58,8 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
+
+
 //게시판 페이지 GET
 router.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
@@ -170,6 +172,14 @@ router.post('/new', upload.single('image'), (req, res) => {
     }
   
 });
+
+router.post('/select', (req, res) => {
+    db.query('UPDATE articles SET selection = ? WHERE id = ?', [commentsId, articlesId], function(error, results, fields) {
+        if (error) return false;
+        return true;
+    });
+});
+
   
 router.get('/:id', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
@@ -204,6 +214,8 @@ router.get('/:id', (req, res) => {
         const author = rows[0].author;
         const createdAt = rows[0].created_at;
         const imagePath = rows[0].image_path;
+        const like_cnt = rows[0].like_cnt;
+        const selection = rows[0].selection;
         
         let html = `
             <h1>Articles</h1>
@@ -257,7 +269,13 @@ router.get('/:id', (req, res) => {
             for (let i = 0; i < commentRows.length; i++) {
                 const commentContent = commentRows[i].content;
                 const commentAuthor = commentRows[i].username;
-            
+                
+                if (selection == 0) {
+                    html += `
+                        <button onclick="select()">click me</button>
+                    `
+                }
+                
                 html += `
                     <div>
                         <p>작성자: ${escapeHtml(commentAuthor)}</p>
@@ -265,6 +283,7 @@ router.get('/:id', (req, res) => {
                         <hr>
                     </div>
                 `;
+
             }
           
             res.send(html);
