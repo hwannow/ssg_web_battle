@@ -19,23 +19,23 @@ connection.getConnection((error) => {
   }
   console.log('Successfully connected to MySQL!');
 
-  fs.readFile('./setting.sql', 'utf8', (readErr, data) => {
-    if (readErr) {
-      console.error('Error reading file:', readErr);
-      connection.end();
-      return;
-    }
+  // fs.readFile('./setting.sql', 'utf8', (readErr, data) => {
+  //   if (readErr) {
+  //     console.error('Error reading file:', readErr);
+  //     connection.end();
+  //     return;
+  //   }
     
-    // 읽은 SQL 파일 실행
-    connection.query(data, (queryErr, results) => {
-      if (queryErr) {
-        console.error('Error executing query:', queryErr);
-        connection.end();
-        return;
-      }
-      console.log('Successfully create tables');
-    });
-  });
+  //   // 읽은 SQL 파일 실행
+  //   connection.query(data, (queryErr, results) => {
+  //     if (queryErr) {
+  //       console.error('Error executing query:', queryErr);
+  //       connection.end();
+  //       return;
+  //     }
+  //     console.log('Successfully create tables');
+  //   });
+  // });
 
 }
 );

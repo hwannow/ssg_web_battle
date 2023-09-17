@@ -6,13 +6,14 @@ const session = require('express-session')
 const bodyParser = require('body-parser');
 const FileStore = require('session-file-store')(session)
 
-var authRouter = require('./src/routes/auth');
+var authRouter = require('./src/routes/auth.js');
 var authCheck = require('./src/utils/authCheck.js');
 var IpCheck = require('./src/utils/IpCheck.js');
 var exception = require('./src/utils/exception.js');
 
-var articlesRouter = require('./src/routes/articles');
-var commentsRouter = require('./src/routes/comments');
+var articlesRouter = require('./src/routes/articles.js');
+var commentsRouter = require('./src/routes/comments.js');
+var rouletteRouter = require('./src/routes/roulette.js');
 
 const app = express();
 const port = 80;
@@ -38,6 +39,7 @@ app.use((req, res, next) => {
 
 //app.use(helmet());
 app.use('/uploads', express.static(__dirname + '/uploads'));
+app.use(express.static('./src/templates/roulette.css'));
 
 app.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
@@ -56,6 +58,7 @@ app.get('/', (req, res) => {
 app.use('/auth', authRouter);
 app.use('/articles', articlesRouter);
 app.use('/comments', commentsRouter);
+app.use('/roulette', rouletteRouter);
 
 
 app.get('/main', (req, res) => {
