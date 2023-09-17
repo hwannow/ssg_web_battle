@@ -136,23 +136,20 @@ const rotate = async () => {
         const response = await fetch('/roulette/run_process', {
             method: 'POST'
         });
+        if (response.ok) {
+            const likeBnt = document.getElementById("runRoulette");
+            if (likeBnt) {
+                likeBnt.remove();
+            } else {
+                    console.error("룰렛 돌리기 버튼이 존재하지 않습니다.");
+            }
+        } else {
+            console.error('요청이 실패했습니다.');
+        }
     } catch (error) {
         console.error('오류 발생:', error);
     }
 };
-
-// async function runRoulette() {
-//     try {
-//         // const url = window.location.href;
-//         url = '/run_process';
-                
-//         const response = await fetch(url, {
-//             method: 'POST'
-//         });
-//     } catch (error) {
-//         console.error('오류 발생:', error);
-//     }
-// };
 
 newMake();
 </script>

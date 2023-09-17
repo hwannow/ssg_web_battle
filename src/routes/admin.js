@@ -25,6 +25,26 @@ const getOutHtml = `
 </html>
 `;
 
+function escapeHtml(text) {
+    let map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+        " ": '&nbsp;',
+        "!": '&#33;',
+        "#": '&#35;',
+        "$": '&#36;',
+        "(": '&#40;',
+        ")": '&#41;',
+        "|": "&#124",
+    	"`": "&#96;"
+    };
+    if (text == null) return;
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 router.get('/', (req, res) => {
     if (!authCheck.isLogined(req, res)) {
         res.status(404).send(getOutHtml);
@@ -63,7 +83,7 @@ router.get('/users', (req,res) => {
     
     db.query("SELECT * FROM USERS",  (error, results) => {
         if (error) {
-            res.send(exception.alertWindow("조회에 실패했습니다.", "/admin"));
+            res.send(exception.alertWindow("조회에 실패했습니다.", "/"));
             return;
         }
 
@@ -77,9 +97,9 @@ router.get('/users', (req,res) => {
         results.forEach(user => {
             html += `
                 <tr>
-                    <td>${user.id}</td>
-                    <td>${user.username}</td>
-                    <td>${user.coin}</td>
+                    <td>${escapeHtml(user.id)}</td>
+                    <td>${escapeHtml(user.username)}</td>
+                    <td>${escapeHtml(user.coin)}</td>
                 </tr>
             `
         });
@@ -107,7 +127,7 @@ router.get('/articles', (req,res) => {
     
     db.query("SELECT * FROM ARTICLES",  (error, results) => {
         if (error) {
-            res.send(exception.alertWindow("조회에 실패했습니다.", "/admin"));
+            res.send(exception.alertWindow("조회에 실패했습니다.", "/"));
             return;
         }
 
@@ -125,13 +145,13 @@ router.get('/articles', (req,res) => {
         results.forEach(article => {
             html += `
                 <tr>
-                    <th>${article.id}</th> 
-                    <th>${article.author}</th> 
-                    <th>${article.created_at}</th> 
-                    <th>${article.selection}</th> 
-                    <th>${article.like_cnt}</th> 
-                    <th>${article.title}</th>
-                    <th>${article.content}</th>
+                    <th>${escapeHtml(article.id)}</th> 
+                    <th>${escapeHtml(article.author)}</th> 
+                    <th>${escapeHtml(article.created_at)}</th> 
+                    <th>${escapeHtml(article.selection)}</th> 
+                    <th>${escapeHtml(article.like_cnt)}</th> 
+                    <th>${escapeHtml(article.title)}</th>
+                    <th>${escapeHtml(article.content)}</th>
                 </tr>
             `
         });
@@ -174,10 +194,10 @@ router.get('/comments', (req,res) => {
         results.forEach(comment => {
             html += `
                 <tr>
-                <th>${comment.id}</th> 
-                <th>${comment.users_id}</th> 
-                <th>${comment.articles_id}</th> 
-                <th>${comment.content}</th> 
+                <th>${escapeHtml(comment.id)}</th> 
+                <th>${escapeHtml(comment.users_id)}</th> 
+                <th>${escapeHtml(comment.articles_id)}</th> 
+                <th>${escapeHtml(comment.content)}</th> 
                 </tr>
             `
         });

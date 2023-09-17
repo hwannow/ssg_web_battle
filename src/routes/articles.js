@@ -608,7 +608,7 @@ router.post('/like/:articlesId', function(req, res) {
         return false;
     }
 
-    if (filter.filtering(articlesId)) {
+    if (filter.filtering(articlesId) || filter.filtering(usersId)) {
         res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles`));
         return;
     } 
@@ -632,7 +632,7 @@ router.post('/like/:articlesId', function(req, res) {
       
             db.query('UPDATE articles SET like_cnt = like_cnt + 1 WHERE id = ?', [articlesId], function(error, results, field) {
                 if (error) {
-                    console.log("like increase error");
+                    res.send(exception.alertWindow("잘못된 접근입니다.", `/articles/${articlesId}`));
                     return;
                 }
             })
@@ -653,12 +653,12 @@ router.post('/select/:articlesId', function(req, res) {
     const articlesId = req.params.articlesId;
     const commentId = req.body.commentId;
 
-    if(!commentId) {
+    if(!commentId || !articlesId) {
         res.send(exception.alertWindow("부적절한 접근입니다.", "/articles"));
         return false;
     }
 
-    if (filter.filtering(articlesId)) {
+    if (filter.filtering(articlesId) || filter.filtering(commentId)) {
         res.send(exception.alertWindow("적절하지 않은 문자가 포함되어 있습니다.", `/articles`));
         return;
     }

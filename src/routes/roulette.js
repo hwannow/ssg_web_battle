@@ -1,5 +1,4 @@
 const fs = require('fs');
-const crypto = require('crypto');
 const path = require('path');
 const express = require('express');
 const router = express.Router();
@@ -30,7 +29,7 @@ router.get('/', (req, res) => {
             const coin = results[0].coin;
             if (coin >= 9) {
                 html += `
-                    <button onclick="rotate()">룰렛 돌리기</button>
+                    <button id="runRoulette" onclick="rotate()">룰렛 돌리기</button>
                 `
             }
             html += `
